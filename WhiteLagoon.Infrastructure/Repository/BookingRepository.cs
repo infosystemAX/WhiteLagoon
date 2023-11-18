@@ -1,0 +1,87 @@
+﻿using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Text;
+using System.Threading.Tasks;
+using WhiteLagoon.Application.Common.Interfaces;
+using WhiteLagoon.Application.Common.Utility;
+using WhiteLagoon.Domain.Entities;
+using WhiteLagoon.Infrastructure.Data;
+
+namespace WhiteLagoon.Infrastructure.Repository
+{
+    public class BookingRepository : Repository<Booking>, IBookingRepository
+    {
+        private readonly ApplicationDbContext _db;
+        public BookingRepository(ApplicationDbContext db) : base(db)
+        {
+            _db = db;
+        }
+        public void Update(Booking entity)
+        {
+            _db.Bookings.Update(entity);
+        }
+
+        public void UpdateStatus(int bookingId, string bookingStatus, int villaNumber = 0)
+        {
+            var bookingFromDb = _db.Bookings.FirstOrDefault(m => m.Id == bookingId);
+            if(bookingFromDb != null)
+            {
+                bookingFromDb.Status = bookingStatus;
+                if(bookingStatus == SD.StatusCheckedIn)
+                {
+                    bookingFromDb.VillaNumber = villaNumber;
+                    bookingFromDb.ActualCheckInDate = DateTime.Now;
+                }
+                if (bookingStatus == SD.StatusCompleted)
+                {
+                    bookingFromDb.ActualCheckOutDate = DateTime.Now;
+                }
+            }
+        }
+
+
+        public void UpdateStripePaymentId(int bookingId, string sessiosId, string paymentPaymentId)
+        {
+            var bookingFromDb = _db.Bookings.FirstOrDefault(m => m.Id == bookingId);
+            if (bookingFromDb != null) 
+            {
+                if (!string.IsNullOrEmpty(sessiosId))
+                {
+                    bookingFromDb.StripeSessionId = sessiosId;
+                }
+                if (!string.IsNullOrEmpty(paymentPaymentId))
+                {
+                    bookingFromDb.StripePaymentIntentId = paymentPaymentId;
+                    bookingFromDb.PaymentDate = DateTime.Now;
+                    bookingFromDb.IsPaymentSuccessful = true;
+                }
+            }
+        }
+
+       
+
+
+        //public void UpdateStripePaymentId(int bookingId, string sessiosId, string paymentPaymentId)
+        //{
+        //    var bookingFromDb = _db.Bookings.FirstOrDefault(m => m.Id == bookingId);
+        //    if (bookingFromDb == null)
+        //    {
+        //        if(!string.IsNullOrEmpty(sessiosId))
+        //        {
+        //            bookingFromDb.StripeSessionId = sessiosId;
+        //        }
+        //        if (!string.IsNullOrEmpty(paymentPaymentId))
+        //        {
+        //            bookingFromDb.StripePaymentIntentId = paymentPaymentId;
+        //            bookingFromDb.PaymentDate = DateTime.Now;
+        //            bookingFromDb.IsPaymentSuccessful = true;
+        //        }
+        //    }
+        //}
+
+    }
+}
+
